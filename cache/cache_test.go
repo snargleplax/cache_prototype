@@ -65,5 +65,6 @@ func TestCacheExpireTTLInBackground(t *testing.T) {
 	time.Sleep(ttl + cadence)
 
 	// Then the internal storage of the cache no longer contains the value.
-	require.NotContains(t, c.m, k)
+	_, ok := c.m.Load(k)
+	require.False(t, ok, "value is still stored in map")
 }

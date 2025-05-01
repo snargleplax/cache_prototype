@@ -1,10 +1,13 @@
 package cache
 
-import "time"
+import (
+	"sync"
+	"time"
+)
 
 // A Cache is an associative in-memory store.
 type Cache struct {
-	m map[string]entry
+	m sync.Map
 }
 
 // An entry is an element stored in a Cache. It includes a record of its own
@@ -33,9 +36,7 @@ var DefaultConfig Config = Config{
 
 // NewCache creates and returns a new, empty Cache.
 func NewCache(conf Config) *Cache {
-	c := Cache{
-		m: make(map[string]entry),
-	}
+	var c Cache
 	go c.checkExpiry(conf.ExpireCheck)
 	return &c
 }
@@ -43,18 +44,19 @@ func NewCache(conf Config) *Cache {
 // Put stores value v in Cache c under key k, replacing any existing value. The
 // value is retained until the provided TTL expires.
 func (c *Cache) Put(k string, v any, ttl time.Duration) {
-	c.m[k] = entry{v: v, expireAfter: time.Now().Add(ttl)}
+	c.m.Store(k, entry{v: v, expireAfter: time.Now().Add(ttl)})
 }
 
 // Get returns the value, if any, stored in Cache c under key k. If no value is
 // stored, it returns nil.
 func (c *Cache) Get(k string) any {
-	ent, ok := c.m[k]
+	v, ok := c.m.Load(k)
 	if !ok {
 		return nil
 	}
+	ent := v.(entry)
 	if ent.expired() {
-		delete(c.m, k)
+		c.m.Delete(k)
 		return nil
 	}
 	return ent.v
@@ -65,11 +67,12 @@ func (c *Cache) Get(k string) any {
 // wasteful busy-loop.
 func (c *Cache) checkExpiry(cadence time.Duration) {
 	for {
-		for k, v := range c.m {
-			if v.expired() {
-				delete(c.m, k)
+		c.m.Range(func(k any, v any) bool {
+			if v != nil && v.(entry).expired() {
+				c.m.Delete(k)
 			}
-		}
+			return true
+		})
 		time.Sleep(cadence)
 	}
 }
