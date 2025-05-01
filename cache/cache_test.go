@@ -10,7 +10,7 @@ import (
 func TestCacheGetNothing(t *testing.T) {
 	// Given a key and a cache with no value for that key
 	k := "test_key"
-	c := NewCache(DefaultConfig)
+	c := NewCache[int](DefaultConfig)
 
 	// When I retrieve from the cache using that key
 	got := c.Get(k)
@@ -22,7 +22,7 @@ func TestCacheGetNothing(t *testing.T) {
 func TestCachePutAndGet(t *testing.T) {
 	// Given a key and a cache with no value for that key
 	k := "test_key"
-	c := NewCache(DefaultConfig)
+	c := NewCache[int](DefaultConfig)
 
 	// When I put an integer value into the cache under that key
 	v := 42
@@ -38,7 +38,7 @@ func TestCacheExpireTTLOnRead(t *testing.T) {
 	// Given a value cached for some TTL
 	k := "test_key"
 	cadence := time.Hour
-	c := NewCache(Config{ExpireCheck: cadence})
+	c := NewCache[int](Config{ExpireCheck: cadence})
 	v := 42
 	ttl := 100 * time.Millisecond
 	c.Put(k, v, ttl)
@@ -56,7 +56,7 @@ func TestCacheExpireTTLInBackground(t *testing.T) {
 	// Given a value cached for some TTL
 	k := "test_key"
 	cadence := 10 * time.Millisecond
-	c := NewCache(Config{ExpireCheck: cadence})
+	c := NewCache[int](Config{ExpireCheck: cadence})
 	v := 42
 	ttl := 100 * time.Millisecond
 	c.Put(k, v, ttl)

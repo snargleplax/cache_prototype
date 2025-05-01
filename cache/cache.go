@@ -6,7 +6,7 @@ import (
 )
 
 // A Cache is an associative in-memory store.
-type Cache struct {
+type Cache[T any] struct {
 	m sync.Map
 }
 
@@ -35,21 +35,21 @@ var DefaultConfig Config = Config{
 }
 
 // NewCache creates and returns a new, empty Cache.
-func NewCache(conf Config) *Cache {
-	var c Cache
+func NewCache[T any](conf Config) *Cache[T] {
+	var c Cache[T]
 	go c.checkExpiry(conf.ExpireCheck)
 	return &c
 }
 
 // Put stores value v in Cache c under key k, replacing any existing value. The
 // value is retained until the provided TTL expires.
-func (c *Cache) Put(k string, v any, ttl time.Duration) {
+func (c *Cache[T]) Put(k string, v T, ttl time.Duration) {
 	c.m.Store(k, entry{v: v, expireAfter: time.Now().Add(ttl)})
 }
 
 // Get returns the value, if any, stored in Cache c under key k. If no value is
 // stored, it returns nil.
-func (c *Cache) Get(k string) any {
+func (c *Cache[T]) Get(k string) any {
 	v, ok := c.m.Load(k)
 	if !ok {
 		return nil
@@ -65,7 +65,7 @@ func (c *Cache) Get(k string) any {
 // checkExpiry is an endless loop that checks for and evicts expired cache
 // entries. Checks are scheduled according to the specified cadence, to avoid a
 // wasteful busy-loop.
-func (c *Cache) checkExpiry(cadence time.Duration) {
+func (c *Cache[T]) checkExpiry(cadence time.Duration) {
 	for {
 		c.m.Range(func(k any, v any) bool {
 			if v != nil && v.(entry).expired() {
