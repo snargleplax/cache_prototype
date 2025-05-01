@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCacheGetNothing(t *testing.T) {
@@ -16,7 +16,7 @@ func TestCacheGetNothing(t *testing.T) {
 	got := c.Get(k)
 
 	// Then I get nothing back
-	assert.Nil(t, got)
+	require.Nil(t, got)
 }
 
 func TestCachePutAndGet(t *testing.T) {
@@ -31,10 +31,10 @@ func TestCachePutAndGet(t *testing.T) {
 	got := c.Get(k)
 
 	// Then I get the same value I had put in
-	assert.Equal(t, v, got)
+	require.Equal(t, v, got)
 }
 
-func TestCacheExpireTTL(t *testing.T) {
+func TestCacheExpireTTLOnRead(t *testing.T) {
 	// Given a value cached for some TTL
 	k := "test_key"
 	c := NewCache()
@@ -48,5 +48,5 @@ func TestCacheExpireTTL(t *testing.T) {
 	got := c.Get(k)
 
 	// Then I get nothing back
-	assert.Nil(t, got)
+	require.Nil(t, got)
 }
